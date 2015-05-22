@@ -1,0 +1,5 @@
+.*
+TAGS
+cabal.sandbox.config
+dist
+!.gitignore
