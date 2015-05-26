@@ -20,6 +20,7 @@ import           Control.Monad.Trans.State
 import qualified Data.ByteString              as S
 import qualified Data.ByteString.Lazy         as L
 import           Data.Typeable                (Typeable)
+import           Network.HTTP.Types
 
 -- | RTSP client monad.
 --
@@ -35,6 +36,8 @@ instance MonadBase IO RtspClient where
 -- | RTSP exceptions.
 --
 data RtspException = InvalidUrlException String String
+                   | ResponseTimeout
+                   | StatusCodeException Status
                    deriving (Show, Typeable)
 
 instance Exception RtspException
@@ -42,10 +45,7 @@ instance Exception RtspException
 -- | RTSP session data.
 --
 data Session = Session
-               { scheme     :: Scheme
-               -- ^ Current scheme.
-               --
-               , host       :: S.ByteString
+               { host       :: S.ByteString
                -- ^ RTSP server address.
                --
                , port       :: Int
@@ -54,7 +54,7 @@ data Session = Session
                , path       :: S.ByteString
                -- ^ Everything after port including query string.
                --
-               , cseq       :: CSeq
+               , reqCSeq    :: CSeq
                -- ^ Request numbering.
                --
                , connection :: Releasable Connection
@@ -63,9 +63,11 @@ data Session = Session
                , receiver   :: Releasable Receiver
                -- ^ Response receiver (or stream receiver if RTSP over TCP).
                --
+               , responseTimeout :: Maybe Int
+               -- ^ Response timeout in microseconds. Default value is 30
+               -- seconds.
+               --
                }
-
-type CSeq = Int               
 
 -- | Session connection to RTSP server.
 --
@@ -102,18 +104,29 @@ type Request = L.ByteString
 -- | Reponse from session connection.
 --
 data Response = Response
-                deriving (Show)
+                { resStatus  :: Status
+                -- ^ Response status code.
+                --
+                , resHeaders :: ResponseHeaders
+                -- ^ Response headers.
+                --
+                , resBody    :: Maybe S.ByteString
+                -- ^ Response body.
+                --
+                , resCSeq    :: CSeq
+                -- ^ Response sequence number.
+                --
+                } deriving (Show)
 
 -- | RTP packet data.
 --
-data RtpPacket = RtpPacket
-                 deriving (Show)
+data Packet = RtpPacket | RtcpPacket
+            deriving (Show)
 
 -- | Type for resource.
 --
 type Releasable a = Maybe (ReleaseKey, a)
 
--- | RTSP scheme.
+-- | Simple types.
 --
-data Scheme = RTSP | RTSP_OVER_HTTP
-            deriving (Show, Eq)
+type CSeq = Int

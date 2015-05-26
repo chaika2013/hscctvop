@@ -78,7 +78,8 @@ makeConnection r w c = do
                           case stack of
                             x:xs -> (xs, return x)
                             [] -> ([], r)
-                       , connectionUnread = \x -> atomicModifyIORef istack $ \stack -> (x:stack, ())
+                       , connectionUnread =  -- unread only if string not null
+                            \x -> unless (S.null x) $ atomicModifyIORef istack $ \stack -> (x:stack, ())
                        , connectionWrite = w
                        , connectionClose = c
                        }

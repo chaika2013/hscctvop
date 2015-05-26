@@ -29,8 +29,8 @@ sendRequest method = get >>= \ss -> do
 --
 updateCSeq :: RtspClient CSeq
 updateCSeq = get >>= \ss -> do
-  let cseq' = cseq ss
-  put $ ss{cseq = cseq' + 1}
+  let cseq' = reqCSeq ss
+  put $ ss{reqCSeq = cseq' + 1}
   return cseq'
 
 -- | Make request.
@@ -46,7 +46,7 @@ makeRequest method ss =
       <> requestUri
       <> byteString " RTSP/1.0\r\n"
       <> requestHeaders
-      <> headerPair ("CSeq", C.pack . show $ cseq ss)
+      <> headerPair ("CSeq", C.pack . show $ reqCSeq ss)
       <> byteString "\r\n"
 
     requestUri =
@@ -55,13 +55,11 @@ makeRequest method ss =
       <> requestPort
       <> requestPath
 
-    requestProtocol
-      | scheme ss == RTSP_OVER_HTTP = byteString "http://"
-      | otherwise = byteString "rtsp://"
+    requestProtocol =
+      byteString "rtsp://"
 
     requestPort
-      | scheme ss == RTSP && port ss == 554 = mempty
-      | scheme ss == RTSP_OVER_HTTP && port ss == 80 = mempty
+      | port ss == 554 = mempty
       | otherwise = byteString ":"
                     <> byteString (C.pack . show $ port ss)
 

@@ -26,6 +26,12 @@ component' Nothing = undefined    -- we must check if component exists before
                                   -- calling this function
 component' (Just (_, comp)) = comp
 
+-- | Helper function converts Nothing to -1.
+--
+notToNeg :: Maybe Int -> Int
+notToNeg (Just d) = d
+notToNeg Nothing = -1
+
 -- | Monoid append helper.
 --
 infixr 5 <>

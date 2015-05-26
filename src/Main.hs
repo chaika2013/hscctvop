@@ -6,7 +6,6 @@ import           Network             (withSocketsDo)
 import           Network.RTSP.Client
 
 import Control.Monad.IO.Class
-import Control.Monad.State
 import Control.Concurrent
 
 import Control.Exception
@@ -17,10 +16,8 @@ main = withSocketsDo $
     setUri "rtsp://172.16.7.21/axis-media/media.amp"
     connect
 
-    sendRequest "OPTIONS"
-    --    ss <- get
---    liftIO . print $ makeRequest ss "OPTIONS"
-
-    liftIO $ threadDelay 10000000
+    communicate "DESCRIBE" >>= liftIO . print
     
+--    liftIO $ threadDelay 1000000
+
     close
