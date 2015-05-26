@@ -5,7 +5,7 @@
 module Network.RTSP.Client.Response where
 
 import           Control.Applicative
-import           Control.Concurrent.Chan
+import           Control.Concurrent
 import           Control.Monad
 import qualified Data.Attoparsec.ByteString       as A
 import           Data.Attoparsec.ByteString.Char8
@@ -17,28 +17,26 @@ import           Network.RTSP.Client.Types
 
 -- | Session connection receiver thread.
 --
-sessionReceiver :: Connection -> Chan Response -> IO ()
-sessionReceiver cn chan = loop $ parse response
+sessionReceiver :: ThreadId -> Connection -> Chan Response -> IO ()
+sessionReceiver parent conn chan = loop $ parse response
   where
     loop parse' = do
-      bs <- connectionRead cn
+      bs <- connectionRead conn
       case parse' bs of
-        
+
         Done rest r -> do
-          connectionUnread cn rest
+          connectionUnread conn rest
           case r of
             Right res -> writeChan chan $! res
             Left _pkt -> undefined
           loop $ parse response
-          
+
         Partial cont -> do
           print ("Partial" :: String)
           loop cont
 
-        Fail{} -> do
-          -- TODO Throw exception to main thread!!!
-          print ("Failure" :: String)
-          undefined
+        Fail _ _ msg ->
+          throwTo parent $ RtspParserException msg
 
 -- | RTSP response parser.
 --

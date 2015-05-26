@@ -4,8 +4,8 @@
 
 module Network.RTSP.Client.Connection where
 
+import           Control.Concurrent
 import           Control.Concurrent.Async
-import           Control.Concurrent.Chan
 import           Control.Exception
 import           Control.Monad.IO.Class
 import           Control.Monad.State
@@ -105,7 +105,8 @@ closeConnection = connectionClose
 newReceiver :: Connection -> IO Receiver
 newReceiver conn = do
   chan <- newChan
-  thread <- async $ sessionReceiver conn chan
+  parent <- myThreadId -- linking current thread for exceptions
+  thread <- async $ sessionReceiver parent conn chan
   return Receiver { receiverThread = thread
                   , receiverChan = chan }
 

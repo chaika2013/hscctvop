@@ -38,6 +38,7 @@ instance MonadBase IO RtspClient where
 data RtspException = InvalidUrlException String String
                    | ResponseTimeout
                    | StatusCodeException Status
+                   | RtspParserException String
                    deriving (Show, Typeable)
 
 instance Exception RtspException
